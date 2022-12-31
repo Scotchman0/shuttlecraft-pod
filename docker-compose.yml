@@ -1,0 +1,12 @@
+---
+version: '3.2'
+services:
+  shuttlecraft-pod:
+    build: .
+    image: shuttlecraft-pod:latest
+    container_name: shuttlecraft-pod
+    restart: unless-stopped
+    ports:
+    - 3000:3000
+    volumes:
+    - ./.data:/opt/shuttlecraft/.data:rw

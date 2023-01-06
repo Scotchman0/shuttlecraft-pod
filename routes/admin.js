@@ -17,6 +17,7 @@ import {
     writeLikes,
     getBoosts,
     writeBoosts,
+    isFollower,
     isFollowing,
     getInboxIndex,
     getInbox,
@@ -240,10 +241,15 @@ router.get('/notifications', async (req, res) => {
         }
     }));
 
+    const following = getFollowing();
+    const followers = getFollowers();
+
     res.render('notifications', {
         layout: 'private',
         me: ActivityPub.actor,
-        notifications: notifications.filter((n)=>n!==null).reverse()
+        notifications: notifications.filter((n)=>n!==null).reverse(),
+        followersCount: followers.length,
+        followingCount: following.length
     });
 });
 
@@ -369,6 +375,8 @@ router.get('/profile/:handle', async (req, res) => {
 
     if (actor) {
         actor.isFollowing = isFollowing(actor.id);
+        actor.isFollower = isFollower(actor.id);
+
         const {
             items
         } = await ActivityPub.fetchOutbox(actor);

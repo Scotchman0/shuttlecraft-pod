@@ -177,6 +177,18 @@ Configure nginx with a certbot ssl certificate.
 
 Configure your domain to proxy requests to the localhost port.
 
+### Docker container build
+
+Clone the repo to your own server.
+
+Configure it and set it up to run on a port of your choosing.
+
+Configure `docker-compose.yml` to point at the exposed port defined in `.env`
+
+Run `docker compose up -d` to deploy the instance
+
+To redeploy the instance with a modified `.env` value; run `docker compose down` then `docker rmi shuttlecraft-pod:latest` followed by `docker compose up -d`
+
 ## Customize
 
 This app uses HandlebarsJS for templating.

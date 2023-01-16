@@ -1,6 +1,6 @@
 <div class="stream">
 <header>
-    <span>🏠 Latest</span>
+    <span>{{prefs.icons.latest}} Latest</span>
     <a href="/private" id="newPosts" class="unread" hidden></a>
 </header>
 <div id="home_stream">
@@ -10,10 +10,10 @@
                 <div class="activity">
                     {{#if boost}}
                         <div class="boost">
-                        🚀 boosted by <a href="{{booster.url}}">{{booster.name}}</a>
+                        🚀 boosted by <a href="/private/feeds/{{getUsername booster.id}}">{{booster.name}}</a>
                         </div>
                     {{/if}}
-                    {{> note note=note}}
+                    {{> note note=note me=../me}}
                 </div>
             {{/with}}
         {{/each}}
@@ -21,20 +21,23 @@
         <div class="empty">
             <p>Follow some people to fill your feed with posts.</p>
             <p>I suggest following me! 
-                I'm <a href="/private/profile/benbrown@hackers.town">benbrown@hackers.town</a>
+                I'm <a href="/private/feeds/benbrown@hackers.town">benbrown@hackers.town</a>
             </p>
         </div>
     {{/if}}
 </div>
 
+
+{{#if next}}
 <a href="/private?offset={{next}}" class="moreLink">More</a>
+{{/if}}
 </div>
-{{> peopleTools}}
 <script>
     // take note of the most recent post date
-    {{#each activitystream}} {{#if @first}} 
+    {{#isEq offset "0"}}
+    {{#each ../activitystream}} {{#if @first}} 
     app.latestPost("{{or this.boost.published this.note.published}}");
-     {{/if}}{{/each}}
-   
+    {{/if}}{{/each}}
+    {{/isEq}}
     app.pollForPosts();
 </script>

@@ -48,7 +48,7 @@ const hbs = create({
       if (str && str.includes('image')) return options.fn(this);
     },
     isEq: (a, b, options) => {
-      if (a === b) return options.fn(this);
+      if (a == b) return options.fn(this);
     },
     or: (a, b, options) => {
       return a || b
@@ -60,7 +60,8 @@ const hbs = create({
       return ActivityPub.getUsername(user)
     },
     stripProtocol: (str) => str.replace(/^https\:\/\//, ''),
-  }
+    stripHTML: (str) => str.replace(/<\/p>/,"\n").replace(/(<([^>]+)>)/gi, "").trim(),
+    }
 });
 
 app.set('domain', DOMAIN);
@@ -128,6 +129,7 @@ ensureAccount(USERNAME, DOMAIN).then((myaccount) => {
   // set the server to use the main account as its primary actor
   ActivityPub.account = myaccount;
   console.log('BOOTING SERVER FOR ACCOUNT: ', myaccount.actor.preferredUsername);
+  console.log(`ACCESS DASHBOARD: https://${ DOMAIN }/private`);
 
   // set up globals
   app.set('domain', DOMAIN);

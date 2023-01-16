@@ -12,7 +12,6 @@ const fetch = (url, type, payload = undefined) => {
             } else if (Http.readyState == 4 && Http.status >= 300) {
                 reject(Http.statusText);
             }
-
         }
     });
 }
@@ -40,6 +39,7 @@ const getCookie = (name) => {
 const app = {
     newPosts: 0,
     newNotifications: 0,
+    newDMs: 0,
     latestPost: (date) => {
         setCookie('latestPost', date, 7);
     },
@@ -54,7 +54,7 @@ const app = {
         }
     },
     alertNewPosts: (meta) => {
-        const newPosts = document.getElementById('newPosts') || document.getElementById('newPostsBadge');
+        const newPosts = document.getElementById('newPosts') ?  [document.getElementById('newPosts')] : Array.from(document.getElementsByClassName('newPostsBadge'));
         if (newPosts) {
             if (meta.newPosts > 0) {
                 if (meta.newPosts > app.newPosts) {
@@ -62,14 +62,18 @@ const app = {
                     console.log('BEEP!');
                 }
                 app.newPosts = meta.newPosts;
-                newPosts.innerHTML = `${meta.newPosts}<span> unread</span>`;
-                newPosts.hidden = false;
+                newPosts.forEach((badge) => {
+                    badge.innerHTML = `${meta.newPosts}<span> unread</span>`;
+                    badge.hidden = false;
+                });
             } else {
-                newPosts.innerHTML = '';
-                newPosts.hidden = true;
+                newPosts.forEach((badge) => {
+                    badge.innerHTML = '';
+                    badge.hidden = true;
+                });
             }
         }
-        const newNotifications = document.getElementById('newNotifications') || document.getElementById('newNotificationsBadge');
+        const newNotifications = document.getElementById('newNotifications') ? [document.getElementById('newNotifications')] : Array.from(document.getElementsByClassName('newNotificationsBadge'));
         if (newNotifications) {
             if (meta.newNotifications > 0) {
                 if (meta.newNotifications > app.newNotifications) {
@@ -77,14 +81,18 @@ const app = {
                     console.log('BEEP!');
                 }
                 app.newNotifications = meta.newNotifications;
-                newNotifications.innerHTML = `${meta.newNotifications}<span> new</span>`;
-                newNotifications.hidden = false;
+                newNotifications.forEach((badge) => {
+                    badge.innerHTML = `${meta.newNotifications}<span> unread</span>`;
+                    badge.hidden = false;
+                });
             } else {
-                newNotifications.innerHTML = '';
-                newNotifications.hidden = true;
+                newNotifications.forEach((badge) => {
+                    badge.innerHTML = '';
+                    badge.hidden = true;
+                });
             }
         }
-        const newDMs = document.getElementById('newDMs') || document.getElementById('newDMsBadge');
+        const newDMs = document.getElementById('newDMs') ? [document.getElementById('newDMs')] : Array.from(document.getElementsByClassName('newDMsBadge'));
         if (newDMs) {
             if (meta.newDMs > 0) {
                 if (meta.newDMs > app.newDMs) {
@@ -92,11 +100,16 @@ const app = {
                     console.log('BEEP!');
                 }
                 app.newDMs = meta.newDMs;
-                newDMs.innerHTML = `${meta.newDMs}<span> new</span>`;
-                newDMs.hidden = false;
+                newDMs.forEach((badge) => {
+                    badge.innerHTML = `${meta.newDMs}<span> unread</span>`;
+                    badge.hidden = false;
+                });
             } else {
-                newDMs.innerHTML = '';
-                newDMs.hidden = true;
+                newDMs.forEach((badge) => {
+                    badge.innerHTML = '';
+                    badge.hidden = true;
+                });
+
             }
         }
 
@@ -111,158 +124,142 @@ const app = {
         });
     },
     toggleBoost: (el, postId) => {
-        const Http = new XMLHttpRequest();
-        const proxyUrl ='/private/boost';
-        Http.open("POST", proxyUrl);
-        Http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        Http.send(JSON.stringify({
-            post: postId,
-        }));
+        if (el.classList.contains('busy')) return;
 
-        Http.onreadystatechange = () => {
-            if (Http.readyState == 4 && Http.status == 200) {
-                const resRaw = Http.responseText;
-                const res = JSON.parse(resRaw);
-                if (res.isBoosted) {
-                    console.log('boosted!');
-                    el.classList.add("active");
-                } else {
-                    console.log('unboosted');
-                    el.classList.remove("active");
-                }
+        el.classList.add('busy');
+        fetch('/private/boost', 'POST', JSON.stringify({
+            post: postId,
+        })).then((resRaw) => {
+            el.classList.remove('busy');
+            const res = JSON.parse(resRaw);
+            if (res.isBoosted) {
+                console.log('boosted!');
+                el.classList.add("active");
             } else {
-                console.error('HTTP PROXY CHANGE', Http);
+                console.log('unboosted');
+                el.classList.remove("active");
             }
-        }
+        }).catch((err) => {
+            console.error(err);
+            el.classList.remove('busy');
+        });
         return false;
     },
     toggleLike: (el, postId) => {
-        const Http = new XMLHttpRequest();
-        const proxyUrl ='/private/like';
-        Http.open("POST", proxyUrl);
-        Http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        Http.send(JSON.stringify({
-            post: postId,
-        }));
+        if (el.classList.contains('busy')) return;
 
-        Http.onreadystatechange = () => {
-            if (Http.readyState == 4 && Http.status == 200) {
-                const resRaw = Http.responseText;
-                const res = JSON.parse(resRaw);
-                if (res.isLiked) {
-                    console.log('liked!');
-                    el.classList.add("active");
-                } else {
-                    console.log('unliked');
-                    el.classList.remove("active");
-                }
+        el.classList.add('busy');
+
+        fetch('/private/like', 'POST', JSON.stringify({
+            post: postId,
+        })).then((resRaw) => {
+            el.classList.remove('busy');
+            const res = JSON.parse(resRaw);
+            if (res.isLiked) {
+                console.log('liked!');
+                el.classList.add("active");
             } else {
-                console.error('HTTP PROXY CHANGE', Http);
+                console.log('unliked');
+                el.classList.remove("active");
             }
-        }
+        }).catch((err) => {
+            console.error(err);
+            el.classList.remove('busy');
+        });
         return false;
+    },
+    editPost: (postId) => {
+        console.log("EDIT POST", postId);
+        window.location = '/private/post?edit=' + encodeURIComponent(postId);
     },
     post: () => {
         const post = document.getElementById('post');
         const cw = document.getElementById('cw');
         const inReplyTo = document.getElementById('inReplyTo');
         const to = document.getElementById('to');
+        const editOf = document.getElementById('editOf');
 
-        const Http = new XMLHttpRequest();
-        const proxyUrl ='/private/post';
-        Http.open("POST", proxyUrl);
-        Http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        Http.send(JSON.stringify({
+        const form = document.getElementById('composer_form');
+        
+        form.disabled = true;
+
+        fetch('/private/post', 'POST', JSON.stringify({
             post: post.value,
             cw: cw.value,
             inReplyTo: inReplyTo.value,
             to: to.value,
-        }));
+            editOf: editOf ? editOf.value : null
+        })).then((newHtml) => {
+            // prepend the new post
+            const el = document.getElementById('home_stream') || document.getElementById('inbox_stream');
 
-        Http.onreadystatechange = () => {
-            if (Http.readyState == 4 && Http.status == 200) {
-                console.log('posted!');
-
-                // prepend the new post
-                const newHtml = Http.responseText;
-                const el = document.getElementById('home_stream') || document.getElementById('inbox_stream');
-
-                if (!el) {
-                    window.location = '/private/';
-                }
-
-                // todo: ideally this would come back with all the html it needs
-                el.innerHTML = newHtml + el.innerHTML;
-
-                // reset the inputs to blank
-                post.value = '';
-                cw.value = '';
+            if (!el) {
+                window.location = '/private/';
             } else {
-                console.error('HTTP PROXY CHANGE', Http);
+                form.disabled = false;
             }
-        }
+
+            el.innerHTML = newHtml + el.innerHTML;
+
+            // reset the inputs to blank
+            post.value = '';
+            cw.value = '';
+        }).catch((err) => {
+            console.error(err);
+        });
         return false;
     },
     replyTo: (activityId, mention) => {
-
         window.location = '/private/post?inReplyTo=' + activityId;
-        return;
-
-        const inReplyTo = document.getElementById('inReplyTo');
-        const post = document.getElementById('post');
-        post.value = `@${ mention } `;
-        inReplyTo.value = activityId;
-        post.focus();
     },
     toggleFollow: (el, userId) => {
-        const Http = new XMLHttpRequest();
-        const proxyUrl ='/private/follow';
-        Http.open("POST", proxyUrl);
-        Http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        Http.send(JSON.stringify({
+        if (el.classList.contains('busy')) return;
+
+        el.classList.add('busy');
+        fetch('/private/follow','POST',JSON.stringify({
             handle: userId,
-        }));
+        })).then((resRaw) => {
+            el.classList.remove('busy');
 
-        Http.onreadystatechange = () => {
-            if (Http.readyState == 4 && Http.status == 200) {
+            console.log('followed!');
+            const res = JSON.parse(resRaw);
+
+            if (res.isFollowed) {
                 console.log('followed!');
-                const resRaw = Http.responseText;
-                const res = JSON.parse(resRaw);
-
-                if (res.isFollowed) {
-                    console.log('followed!');
-                    el.classList.add("active");
-                } else {
-                    console.log('unfollowed');
-                    el.classList.remove("active");
-                }
+                el.classList.add("active");
             } else {
-                console.error('HTTP PROXY CHANGE', Http);
+                console.log('unfollowed');
+                el.classList.remove("active");
             }
-        }
+        }).catch((err) => {
+            console.error(err);
+            el.classList.remove('busy');
+        });
         return false;
     },    
+    loadMoreFeeds: () => {
+        const el = document.getElementById('top_feeds');
+        fetch('/private/morefeeds', 'GET', null)
+            .then((newHTML) => {
+                const morelink = el.childNodes[el.childNodes.length-1];
+                morelink.remove();
+                el.innerHTML = el.innerHTML + newHTML;
+            });
+        return false;
+    },
+    showMenu: () => {
+        document.getElementById('menu').classList.toggle('active');
+        return false;
+    },
     lookup: () => {
         const follow = document.getElementById('lookup');
         const lookup_results = document.getElementById('lookup_results');
 
         console.log('Lookup user', follow.value);
-
-        const Http = new XMLHttpRequest();
-        const proxyUrl ='/private/lookup?handle=' + encodeURIComponent(follow.value);
-        console.log(proxyUrl);
-
-        Http.open("GET", proxyUrl);
-        Http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        Http.send();
-
-        Http.onreadystatechange = () => {
-            if (Http.readyState == 4 && Http.status == 200) {
-                lookup_results.innerHTML = Http.responseText;
-            } else {
-                console.error('HTTP PROXY CHANGE', Http);
-            }
-        }
+        fetch('/private/lookup?handle=' + encodeURIComponent(follow.value), 'GET', null)
+            .then((newHTML) => {
+                lookup_results.innerHTML = newHTML;
+            });
         return false;
     }    
 }
